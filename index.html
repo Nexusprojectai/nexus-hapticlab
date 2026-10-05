@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b1220">
+<title>Nexus HapticLab</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --bg:#0b1220; --card:#1e293b; --accent:#38bdf8; --accent2:#60a5fa;
+    --text:#f8fafc; --muted:#94a3b8; --border:#334155;
+  }
+  html, body { height:100%; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(56,189,248,.12), transparent 60%),
+      radial-gradient(900px 500px at 100% 110%, rgba(96,165,250,.10), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    min-height:100vh; padding:16px 14px 32px;
+    overscroll-behavior:none;
+  }
+  header { text-align:center; margin-bottom:18px; }
+  h1 { font-size:1.5rem; font-weight:800; letter-spacing:-.02em; }
+  h1 .glow { color:var(--accent); text-shadow:0 0 12px rgba(56,189,248,.6); }
+  .sub { color:var(--muted); font-size:.78rem; margin-top:5px; }
+  .badge {
+    display:inline-block; margin-top:10px; padding:4px 12px; border-radius:999px;
+    font-size:.68rem; font-weight:700; letter-spacing:.04em;
+    background:rgba(56,189,248,.12); color:var(--accent); border:1px solid rgba(56,189,248,.35);
+  }
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:18px;
+    padding:16px; margin-bottom:14px; box-shadow:0 8px 26px rgba(0,0,0,.35);
+  }
+  .card h2 { font-size:.82rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .pad {
+    user-select:none; -webkit-user-select:none; touch-action:manipulation;
+    height:190px; border-radius:20px; border:2px dashed rgba(56,189,248,.4);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    background:radial-gradient(circle at 50% 50%, rgba(56,189,248,.13), rgba(56,189,248,.02) 70%);
+    transition:transform .06s ease, border-color .2s, background .2s; cursor:pointer;
+    font-weight:800; font-size:1rem; color:var(--accent);
+  }
+  .pad:active { transform:scale(.97); border-color:var(--accent); }
+  .pad.boom { animation:boom .45s ease; background:radial-gradient(circle, rgba(96,165,250,.5), rgba(56,189,248,.05) 75%); }
+  @keyframes boom { 0%{transform:scale(1)} 40%{transform:scale(.93)} 100%{transform:scale(1)} }
+  .pad .count { display:block; font-size:2.2rem; color:var(--text); margin-bottom:2px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn {
+    min-height:64px; border-radius:14px; border:1px solid var(--border);
+    background:linear-gradient(180deg,#243449,#1a2637); color:var(--text);
+    font-size:.82rem; font-weight:700; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; cursor:pointer; touch-action:manipulation;
+    transition:transform .08s, border-color .2s, box-shadow .2s;
+  }
+  .btn:active { transform:scale(.95); }
+  .btn.on { border-color:var(--accent); box-shadow:0 0 0 2px rgba(56,189,248,.25), 0 0 16px rgba(56,189,248,.35); }
+  .btn .em { font-size:1.25rem; }
+  .btn .pat { font-size:.6rem; color:var(--muted); font-weight:600; letter-spacing:.03em; }
+  .row { display:flex; align-items:center; gap:12px; margin-top:12px; }
+  .row label { font-size:.74rem; color:var(--muted); font-weight:700; min-width:78px; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; flex:1; height:6px; border-radius:99px; background:#0f1a2b; outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px rgba(56,189,248,.7); cursor:pointer; }
+  .val { font-size:.74rem; font-weight:800; color:var(--accent); min-width:44px; text-align:right; }
+  .meter { height:120px; border-radius:14px; background:#0f1a2b; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:6px; overflow:hidden; }
+  .bar { width:10px; height:8px; border-radius:6px; background:var(--accent); opacity:.5; transition:height .1s, opacity .1s; }
+  .status { font-size:.74rem; color:var(--muted); text-align:center; margin-top:10px; font-weight:600; }
+  .status b { color:var(--accent); }
+  .toggle { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(51,65,85,.5); }
+  .toggle:last-child{border-bottom:none;}
+  .toggle span{ font-size:.8rem; font-weight:700; }
+  .sw { width:50px; height:28px; border-radius:99px; background:#0f1a2b; border:1px solid var(--border); position:relative; cursor:pointer; transition:.2s; }
+  .sw::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--muted); transition:.2s; }
+  .sw.on { background:rgba(56,189,248,.25); border-color:var(--accent); }
+  .sw.on::after { left:25px; background:var(--accent); box-shadow:0 0 10px rgba(56,189,248,.8); }
+  .warn { background:rgba(250,204,21,.1); border:1px solid rgba(250,204,21,.4); color:#fde047;
+          font-size:.72rem; padding:10px 12px; border-radius:12px; margin-bottom:14px; font-weight:600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nexus <span class="glow">HapticLab</span></h1>
+  <div class="sub">Phone interaction test bench — vibration, motion &amp; sensors</div>
+  <div class="badge" id="supportBadge">CHECKING SUPPORT…</div>
+</header>
+
+<div class="warn" id="warnBox" style="display:none"></div>
+
+<!-- TAP PAD -->
+<div class="card">
+  <h2>👆 Tap Pad — Live Feedback</h2>
+  <div class="pad" id="pad">
+    <div><span class="count" id="tapCount">0</span>TAP ME</div>
+  </div>
+  <div class="status">Last pattern: <b id="lastPat">—</b></div>
+</div>
+
+<!-- PATTERN BUTTONS -->
+<div class="card">
+  <h2>🎛️ Vibration Patterns</h2>
+  <div class="grid" id="patGrid"></div>
+</div>
+
+<!-- INTENSITY -->
+<div class="card">
+  <h2>🎚️ Intensity &amp; Duration</h2>
+  <div class="row">
+    <label>Intensity</label>
+    <input type="range" id="intensity" min="1" max="10" value="6">
+    <span class="val" id="intensityVal">6</span>
+  </div>
+  <div class="row">
+    <label>Duration</label>
+    <input type="range" id="duration" min="20" max="600" value="120">
+    <span class="val" id="durationVal">120</span>
+  </div>
+  <div class="grid" style="margin-top:14px">
+    <button class="btn" id="buzzBtn"><span class="em">⚡</span>Custom Buzz</button>
+    <button class="btn" id="stopBtn"><span class="em">⏹️</span>Stop All</button>
+  </div>
+</div>
+
+<!-- MOTION SENSOR -->
+<div class="card">
+  <h2>📳 Motion Sensor — Shake Detector</h2>
+  <div class="meter" id="meter"></div>
+  <div class="status">Acceleration: <b id="accelVal">0.0</b> m/s² · Shakes: <b id="shakeCount">0</b></div>
+  <div class="grid" style="margin-top:14px">
+    <button class="btn" id="motionBtn"><span class="em">📡</span><span id="motionLabel">Enable Motion</span></button>
+    <button class="btn" id="shakeHzBtn"><span class="em">🤝</span>Shake = Buzz</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="card">
+  <h2>⚙️ Settings</h2>
+  <div class="toggle"><span>Haptics on every tap</span><div class="sw on" id="swTap"></div></div>
+  <div class="toggle"><span>Visual flash effects</span><div class="sw on" id="swFlash"></div></div>
+  <div class="toggle"><span>Audible click</span><div class="sw" id="swSound"></div></div>
+</div>
+
+<div class="status" style="margin-top:6px">Built by Nexus · works best on a real phone 📱</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------- FEATURE DETECTION ----------
+  const hasVibe = 'vibrate' in navigator;
+  const hasMotion = 'DeviceMotionEvent' in window;
+  const badge = document.getElementById('supportBadge');
+  const warnBox = document.getElementById('warnBox');
+
+  badge.textContent = hasVibe ? '✅ VIBRATION SUPPORTED' : '⚠️ NO VIBRATION API';
+  if(!hasVibe){
+    warnBox.style.display='block';
+    warnBox.textContent = 'Your browser/device does not expose the Vibration API. Visual feedback will still work — try on Chrome for Android.';
+  }
+
+  let settings = { tap:true, flash:true, sound:false };
+
+  // ---------- AUDIO (light click) ----------
+  let actx = null;
+  function click(freq, dur){
+    if(!settings.sound) return;
+    try{
+      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type='sine'; o.frequency.value=freq||880;
+      g.gain.setValueAtTime(.09, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001, actx.currentTime+(dur||.05));
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime+(dur||.05));
+    }catch(e){}
+  }
+
+  // ---------- CORE VIBRATE ----------
+  function buzz(pattern){
+    if(!settings.tap) return;
+    if(!hasVibe) { click(660,.04); return; }
+    try { navigator.vibrate(pattern); } catch(e){}
+  }
+
+  // ---------- TAP PAD ----------
+  const pad = document.getElementById('pad');
+  const tapCountEl = document.getElementById('tapCount');
+  const lastPatEl = document.getElementById('lastPat');
+  let taps = 0;
+
+  const patternNames = ['Pulse','Double','Triple','Heartbeat','SOS','Ramp','Zigzag','Staccato'];
+  function randomPattern(){
+    const inten = +document.getElementById('intensity').value;
+    const dur = +document.getElementById('duration').value;
+    const base = Math.max(15, dur * (11-inten)/10);
+    const name = patternNames[Math.floor(Math.random()*patternNames.length)];
+    let pat;
+    switch(name){
+      case 'Heartbeat': pat=[base,90,base*1.6,220]; break;
+      case 'SOS':       pat=[base,base,base,base,base,220,base*3,90,base*3,90,base*3,220,base,base,base]; break;
+      case 'Ramp':      pat=[base*.4,40,base*.7,40,base,40,base*1.4]; break;
+      case 'Zigzag':    pat=[base,60,base*2,60,base*.4,60,base*2.5]; break;
+      case 'Staccato':  pat=[base*.4,30,base*.4,30,base*.4,30,base*.4,30,base*2]; break;
+      case 'Double':    pat=[base,80,base*1.6]; break;
+      case 'Triple':    pat=[base,60,base,60,base*1.4]; break;
+      default:          pat=[base,50,base]; break;
+    }
+    return {name, pat};
+  }
+
+  function doTap(){
+    taps++;
+    tapCountEl.textContent = taps;
+    const {name, pat} = randomPattern();
+    lastPatEl.textContent = name;
+    buzz(pat);
+    click(720 + (taps%5)*80, .05);
+    if(settings.flash){
+      pad.classList.remove('boom'); void pad.offsetWidth; pad.classList.add('boom');
+    }
+  }
+  pad.addEventListener('pointerdown', function(e){ e.preventDefault(); doTap(); });
+
+  // ---------- PATTERN BUTTONS ----------
+  const patterns = [
+    {name:'Pulse',   em:'💓', pat:[200,100,200,100,200]},
+    {name:'Double',  em:'🖱️', pat:[80,60,120]},
+    {name:'Triple',  em:'🔔', pat:[60,40,60,40,60]},
+    {name:'Heart',   em:'❤️', pat:[100,80,180,240,100,80,180]},
+    {name:'SOS',     em:'🆘', pat:[100,100,100,100,100,220,300,90,300,90,300,220,100,100,100]},
+    {name:'Long',    em:'🌊', pat:[600]},
+    {name:'Ramp',    em:'📈', pat:[30,40,60,40,90,40,140,40,220]},
+    {name:'Ticking', em:'⏱️', pat:[40,120,40,120,40,120,40,120,200]},
+    {name:'Bounce',  em:'🏀', pat:[120,50,90,50,60,50,30,200]},
+    {name:'Success', em:'✅', pat:[50,50,50,50,180]},
+    {name:'Error',   em:'❌', pat:[300,80,300]},
+    {name:'Chirp',   em:'🐦', pat:[25,25,25,25,25,120]}
+  ];
+  const grid = document.getElementById('patGrid');
+  patterns.forEach(function(p){
+    const b = document.createElement('button');
+    b.className='btn';
+    b.innerHTML = '<span class="em">'+p.em+'</span>'+p.name+'<span class="pat">'+p.pat.join('·')+' ms</span>';
+    b.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      buzz(p.pat); click(600+Math.random()*400,.05);
+      b.classList.add('on'); setTimeout(function(){ b.classList.remove('on'); }, 350);
+      lastPatEl.textContent = p.name;
+    });
+    grid.appendChild(b);
+  });
+
+  // ---------- INTENSITY / DURATION ----------
+  const intensity = document.getElementById('intensity');
+  const duration  = document.getElementById('duration');
+  const intensityVal = document.getElementById('intensityVal');
+  const durationVal  = document.getElementById('durationVal');
+  intensity.addEventListener('input', function(){ intensityVal.textContent = intensity.value; });
+  duration.addEventListener('input',  function(){ durationVal.textContent  = duration.value; });
+
+  document.getElementById('buzzBtn').addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    const i = +intensity.value, d = +duration.value;
+    const on  = Math.max(15, d*(11-i)/10);
+    const off = Math.round(d*0.4);
+    const pat = [on,off,on*1.3,off,on*0.8];
+    buzz(pat); click(520,.06);
+    lastPatEl.textContent = 'Custom ('+i+'/'+d+')';
+  });
+  document.getElementById('stopBtn').addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    if(hasVibe){ try{ navigator.vibrate(0); }catch(err){} }
+    lastPatEl.textContent = 'Stopped';
+  });
+
+  // ---------- MOTION SENSOR ----------
+  const meter = document.getElementById('meter');
+  const bars = [];
+  const BAR_N = 16;
+  for(let i=0;i<BAR_N;i++){ const b=document.createElement('div'); b.className='bar'; meter.appendChild(b); bars.push(b); }
+
+  const accelVal = document.getElementById('accelVal');
+  const shakeCountEl = document.getElementById('shakeCount');
+  let shakes = 0, motionOn = false, shakeBuzz = false;
+  let lastShakeTs = 0, lastMag = 0;
+
+  function renderBars(mag){
+    for(let i=0;i<BAR_N;i++){
+      bars[i].style.height = (8 + Math.min(100, mag*24) * (0.5+Math.random()*0.5)) + 'px';
+      bars[i].style.opacity = 0.4 + Math.min(0.6, mag/12);
+    }
+  }
+
+  function onMotion(e){
+    const a = e.accelerationIncludingGravity || e.acceleration;
+    if(!a) return;
+    const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+    accelVal.textContent = mag.toFixed(1);
+    renderBars(mag);
+
+    const delta = Math.abs(mag - lastMag);
+    lastMag = mag;
+    const now = Date.now();
+    if(delta > 8 && now - lastShakeTs > 400){
+      lastShakeTs = now;
+      shakes++;
+      shakeCountEl.textContent = shakes;
+      if(shakeBuzz){
+        if(hasVibe){ try{ navigator.vibrate([60,40,60]); }catch(err){} }
+        click(440,.06);
+      }
+      if(settings.flash){
+        document.body.style.transition='background .1s';
+        document.body.style.filter='brightness(1.35)';
+        setTimeout(function(){ document.body.style.filter=''; }, 90);
+      }
+    }
+  }
+
+  const motionBtn = document.getElementById('motionBtn');
+  const motionLabel = document.getElementById('motionLabel');
+
+  function enableMotion(){
+    if(!hasMotion){
+      warnBox.style.display='block';
+      warnBox.textContent='DeviceMotionEvent is not available in this browser. Motion features need a mobile device.';
+      return;
+    }
+    // iOS 13+ permission gate
+    if(typeof DeviceMotionEvent.requestPermission === 'function'){
+      DeviceMotionEvent.requestPermission().then(function(res){
+        if(res === 'granted'){ window.addEventListener('devicemotion', onMotion); motionOn=true; motionLabel.textContent='Motion ON ✅'; }
+        else { warnBox.style.display='block'; warnBox.textContent='Motion permission denied — you can re-enable it in browser settings.'; }
+      }).catch(function(){});
+    } else {
+      window.addEventListener('devicemotion', onMotion);
+      motionOn=true; motionLabel.textContent='Motion ON ✅';
+    }
+  }
+  motionBtn.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    if(!motionOn) enableMotion();
+    else { window.removeEventListener('devicemotion', onMotion); motionOn=false; motionLabel.textContent='Enable Motion'; }
+  });
+
+  document.getElementById('shakeHzBtn').addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    shakeBuzz = !shakeBuzz;
+    this.classList.toggle('on', shakeBuzz);
+    if(hasVibe){ try{ navigator.vibrate(shakeBuzz?[40,40,40]:30); }catch(err){} }
+  });
+
+  // ---------- SETTINGS TOGGLES ----------
+  function bindSwitch(id, key){
+    const el = document.getElementById(id);
+    el.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      settings[key] = !settings[key];
+      el.classList.toggle('on', settings[key]);
+      if(key==='sound' && settings[key]) click(880,.06);
+    });
+  }
+  bindSwitch('swTap','tap');
+  bindSwitch('swFlash','flash');
+  bindSwitch('swSound','sound');
+
+  // ---------- INIT ----------
+  // warm audio context on first user gesture
+  document.body.addEventListener('pointerdown', function init(){
+    if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    document.body.removeEventListener('pointerdown', init);
+  });
+
+  // welcome buzz
+  setTimeout(function(){
+    if(hasVibe){ try{ navigator.vibrate([50,60,50]); }catch(e){} }
+  }, 600);
+
+})();
+</script>
+</body>
+</html>
